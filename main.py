@@ -22,14 +22,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-twilio_client = Client(
-    os.getenv("TWILIO_ACCOUNT_SID"),
-    os.getenv("TWILIO_AUTH_TOKEN")
-)
-
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_FROM_NUMBER = os.getenv("TWILIO_FROM_NUMBER")
 VERIFIED_TO_NUMBER = os.getenv("VERIFIED_TO_NUMBER")
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL")
+
+twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 generated_codes = {}
 verified_users = {}
@@ -42,9 +41,7 @@ class StartIvrRequest(BaseModel):
 
 @app.get("/")
 async def root():
-    return {
-        "message": "IVR backend is running"
-    }
+    return {"message": "IVR backend is running"}
 
 
 @app.post("/start-ivr")
@@ -70,7 +67,7 @@ async def start_ivr(payload: StartIvrRequest):
     }
 
 
-@app.get("/ivr/twiml")
+@app.api_route("/ivr/twiml", methods=["GET", "POST"])
 async def ivr_twiml(user: str):
     code = generated_codes.get(user)
 
@@ -84,7 +81,7 @@ async def ivr_twiml(user: str):
     gather = Gather(
         input="dtmf",
         num_digits=6,
-        action=f"/ivr/verify?user={quote(user)}",
+        action=f"{PUBLIC_BASE_URL}/ivr/verify?user={quote(user)}",
         method="POST"
     )
     gather.say(f"Your verification code is {code}. Please enter the 6 digits now.")
