@@ -2,10 +2,11 @@ import os
 import random
 from urllib.parse import quote
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
-from dotenv import load_dotenv
+from pydantic import BaseModel
 from twilio.rest import Client
 from twilio.twiml.voice_response import VoiceResponse, Gather
 
@@ -34,10 +35,21 @@ generated_codes = {}
 verified_users = {}
 
 
+class StartIvrRequest(BaseModel):
+    user: str | None = None
+    email: str | None = None
+
+
+@app.get("/")
+async def root():
+    return {
+        "message": "IVR backend is running"
+    }
+
+
 @app.post("/start-ivr")
-async def start_ivr(request: Request):
-    data = await request.json()
-    user = data.get("email") or data.get("user") or "unknown"
+async def start_ivr(payload: StartIvrRequest):
+    user = payload.email or payload.user or "unknown"
 
     code = f"{random.randint(0, 999999):06d}"
     generated_codes[user] = code
